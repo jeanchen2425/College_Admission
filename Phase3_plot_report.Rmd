@@ -1,0 +1,178 @@
+---
+title: "CSC343_PhaseIIIData"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(ggplot2)
+```
+
+## Import Data
+```{r}
+Transfers <- read.csv("/Users/jeanchen/Desktop/CSC343/Phase3/Data/Transfers.csv")
+Freshmen <- read.csv("/Users/jeanchen/Desktop/CSC343/Phase3/Data/Freshmen.csv")
+head(Transfers)
+head(Freshmen)
+HighschoolInfo <- read.csv("/Users/jeanchen/Desktop/CSC343/Phase3/Data/HighschoolInfo.csv")
+SchoolInfo <- read.csv("/Users/jeanchen/Desktop/CSC343/Phase3/Data/SchoolInfo.csv")
+head(HighschoolInfo)
+head(SchoolInfo)
+
+```
+
+
+## Q2 Plot 
+```{r}
+
+# filter applied > 400
+
+High_Applied <- filter(Transfers, applied > 400) 
+
+# create admission rate column 
+High_Applied$admission_rate <- High_Applied$admission/High_Applied$applied
+
+# The lowest admission rate 
+Transfer_full <- filter(Transfers, !is.na(admission))
+average_ad_rate <- mean(Transfer_full$admission_rate)
+low_ad_rate_transfers <- filter(Transfer_full, admission_rate < average_ad_rate,ethnicity != "All")
+
+# plot
+theme_set(theme_classic())
+
+# Histogram on a Categorical variable
+g <- ggplot(low_ad_rate_transfers)
+g + geom_bar(aes(ethnicity), width = 0.5) + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) + 
+  labs(title="Ethnicity Distribution of the below-average admission rates") 
+
+```
+
+# Q3 - Highschool 
+```{r}
+# Create a column of admission rate
+
+Freshmen$admission_rate <- Freshmen$admission/Freshmen$applied
+Freshmen_ad_rate <- filter(Freshmen, !is.na(admission_rate), ethnicity != "All")
+
+# Group by Ethnicity 
+
+Freshmen_Eth_rate <- Freshmen_ad_rate %>%
+  group_by(ethnicity) %>%
+  summarise(mean = mean(admission_rate))
+
+# Plot
+g <- ggplot(Freshmen_ad_rate, aes(ethnicity, admission_rate))
+
+g + geom_boxplot (fill="gray") + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) + 
+   labs(title="Ethnicity Distribution of Freshmen Admission Rate ", 
+       x="Ethnicity",
+       y="Admission Rate")
+
+```
+
+# Q3 - College Transfer
+```{r}
+Transfers$admission_rate <- Transfers$admission/Transfers$applied
+Transfers_ad_rate <- filter(Transfers, !is.na(admission_rate), ethnicity != "All")
+
+# Group by Ethnicity 
+
+Transfers_Eth_rate <- Transfers_ad_rate %>%
+  group_by(ethnicity) %>%
+  summarise(mean = mean(admission_rate))
+
+# Plot
+g <- ggplot(Transfers_ad_rate, aes(ethnicity, admission_rate))
+
+g + geom_boxplot (fill="gray") + 
+  theme(axis.text.x = element_text(angle=65, vjust=0.6)) + 
+   labs(title="Ethnicity Distribution of Transfer Admission Rate ", 
+       x="Ethnicity",
+       y="Admission Rate")
+```
+
+# More questions
+```{r}
+# Asians 
+Asians_transfer <- filter(Transfers, ethnicity == "Asian", !is.na(admission_rate), admission_rate < average_ad_rate,  applied > 400)
+
+Asians_transfer <- filter(Transfers, ethnicity == "Asian", !is.na(admission_rate))
+
+g <- ggplot(Asians_transfer, aes(admission_rate))
+
+g + geom_histogram(fill = "blue", 
+                   binwidth = .01, 
+                   col="blue", 
+                   size=0.01)
+
+
+
+```
+
+```{r}
+# Hispanic 
+
+His_transfer <- filter(Transfers, ethnicity == "Hispanic/ Latino", !is.na(admission_rate))
+His_transfer <- filter(Transfers, ethnicity == "Hispanic/ Latino", !is.na(admission_rate), admission_rate < average_ad_rate, applied > 400)
+g1 <- ggplot(His_transfer, aes(admission_rate))
+
+g1 + geom_histogram(fill = "pink", 
+                   binwidth = .01, 
+                   col="pink", 
+                   size=0.01)
+```
+
+
+# Q1 
+
+```{r}
+queries1 <- read.csv("/Users/jeanchen/Desktop/CSC343/Phase3/queries1.csv")
+
+head(queries1) 
+
+```
+
+
+```{r}
+t.test(queries1$highschool_admission, queries1$transfer_admission)
+
+var(queries1$highschool_admission)
+var(queries1$transfer_admission)
+```
+
+```{r}
+g <- ggplot(queries1, aes(highschool_admission))
+
+g + geom_histogram(fill = "green4", 
+                   binwidth = .01, 
+                   col="green4", 
+                   size=0.01)  
+```
+
+```{r}
+g <- ggplot(queries1, aes(transfer_admission))
+
+g + geom_histogram(fill = "tomato", 
+                   binwidth = .01, 
+                   col="tomato", 
+                   size=0.01)
+```
+
+```{r}
+df <- as.data.frame(table(queries1$higher))
+colnames(df) <- c("class", "freq")
+pie <- ggplot(df, aes(x = "", y=freq, fill = factor(class))) + 
+  geom_bar(width = 1, stat = "identity") +
+  theme(plot.title = element_text(hjust=0.5)) + 
+  labs(fill="class", 
+       x=NULL, 
+       y=NULL, 
+       title="Higher Admission Distribution")
+
+pie + coord_polar(theta = "y", start=0)
+```
+
